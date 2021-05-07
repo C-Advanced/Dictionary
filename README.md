@@ -2,7 +2,7 @@
 ## _A mini project with Btree and GTK3_
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](#)
 
-This dictionary is a a mini project with Btree and GTK3
+This dictionary is a mini project with Btree and GTK3
 
 ## Features
 
