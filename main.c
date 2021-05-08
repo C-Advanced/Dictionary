@@ -78,8 +78,7 @@ void trim(char *s)
     memmove(s, p, l + 1);
 }
 
-gchar *
-g_utf8_make_valid_custom (const gchar *str,
+gchar * g_utf8_make_valid_custom (const gchar *str,
                    gssize       len)
 {
   GString *string;
@@ -270,11 +269,11 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
 void lookUp(app_widgets *wdgt, char *word) // Tìm kiếm từ
 {
     openBT();                                                       // Mở btree
-    gchar *meaning = (gchar *)malloc(MEAN_MAX_LEN * sizeof(gchar)); // gchar = char nhé
-    gint i;                                                         // gint = int nhé
+    char *meaning = (gchar *)malloc(MEAN_MAX_LEN * sizeof(gchar)); // gchar = char nhé
+    int i;                                                         // gint = int nhé
     if (bfndky(eng_vie, word, &i) == 0)
     {
-        gchar *meaningUTF;
+        char *meaningUTF;
 
         btsel(eng_vie, word, meaning, MEAN_MAX_LEN, &i);
 
@@ -284,8 +283,6 @@ void lookUp(app_widgets *wdgt, char *word) // Tìm kiếm từ
 
         //Set meaningUTF cho meaningViewBuff
         gtk_text_buffer_set_text(meaningViewBuff, meaningUTF, -1);
-        
-        free(meaningUTF);
     }
     else
     {
@@ -308,7 +305,7 @@ void autoComplete(GtkWidget *widget) // Tự động hoàn thành từ sau khi �
     openBT();
     char word[WORD_MAX_LEN], mean[MEAN_MAX_LEN];
     int rsize;
-    gchar *key = (gchar *)gtk_entry_get_text(GTK_ENTRY(widget));
+    char *key = (char *)gtk_entry_get_text(GTK_ENTRY(widget));
 
     btpos(eng_vie, 1);
     while (btseln(eng_vie, word, mean, MEAN_MAX_LEN, &rsize) == 0) // Lặp qua tất cả các từ từ vị trí đâu của btree
@@ -341,7 +338,7 @@ void messageDialog(app_widgets *wdgt, char *message, int type) // Hàm xử lý 
 
 void on_searchEntry_activate(GtkEntry *searchEntry, app_widgets *wdgt) // Hàm xử lý sự kiến ấn Enter ở searchEntry
 {
-    gchar *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
+    char *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
     if (strlen(word) <= 0)
     {
         messageDialog(wdgt, "Vui long nhap day du!!!", 1);
@@ -376,30 +373,34 @@ gboolean onEventPressKey(GtkWidget *widget, GdkEventKey *key, app_widgets *wdgt)
 
 void addWord(app_widgets *wdgt) // Hàm thêm từ
 {
-    gchar word[WORD_MAX_LEN];
+    char word[WORD_MAX_LEN];
+    char wordLower[WORD_MAX_LEN];
     strcpy(word, gtk_entry_get_text(GTK_ENTRY(wdgt->w_entryAddWord)));
 
-    //Lấy mean từ TextView
+    //Lấy meaning từ TextView
     GtkTextIter start, end;
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(wdgt->w_addMeaning);
-    gchar *mean;
+    char *mean;
     gtk_text_buffer_get_bounds(buffer, &start, &end);
     mean = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-    gint val;
+    int val;
 
-    if (strlen(word) <= 0 || strlen(mean) <= 0)
+    strLower(wordLower, word);
+    trim(wordLower);
+    gtk_entry_buffer_set_text(gtk_entry_get_buffer(wdgt->w_entryAddWord), wordLower, -1);
+    if (strlen(wordLower) <= 0 || strlen(mean) <= 0)
     {
         messageDialog(wdgt, "Vui long nhap day du!!!", 1);
     }
     else
     {
-        if (bfndky(eng_vie, word, &val) == 0)
+        if (bfndky(eng_vie, wordLower, &val) == 0)
         {
             messageDialog(wdgt, "Tu da ton tai!!!", 1);
         }
         else
         {
-            btins(eng_vie, word, mean, strlen(mean));
+            btins(eng_vie, wordLower, mean, strlen(mean));
             messageDialog(wdgt, "Da them tu moi!!!", 1);
         }
     }
@@ -412,8 +413,8 @@ void addWord(app_widgets *wdgt) // Hàm thêm từ
 
 void delWord(app_widgets *wdgt) // Hàm xóa từ
 {
-    gchar *word = (gchar *)gtk_entry_get_text(GTK_ENTRY(wdgt->w_entryDeleteWord));
-    gint i;
+    char *word = (gchar *)gtk_entry_get_text(GTK_ENTRY(wdgt->w_entryDeleteWord));
+    int i;
 
     if (strlen(word) <= 0)
     {
@@ -428,7 +429,7 @@ void delWord(app_widgets *wdgt) // Hàm xóa từ
         }
         else
         {
-            messageDialog(wdgt, "Tu khong ton tai!!!", 1);
+            messageDialog(wdgt, "Tu khong duoc co chu viet hao hoac tu khong ton tai!!!", 1);
         }
     }
 

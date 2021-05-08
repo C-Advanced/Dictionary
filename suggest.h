@@ -1,6 +1,6 @@
-// Hàm  này dùng khi chọn một từ ở mục đề xuất của searchEntry \
-Sau đó đặt từ đó vào searchEntry.
-void match_selected(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *iter, app_widgets *wdgt) {
+// Hàm  này dùng khi chọn một từ ở mục đề xuất của searchEntry
+// Sau đó đặt từ đó vào searchEntry.
+gboolean match_selected(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *iter, app_widgets *wdgt) {
     gchar *word; // Khởi tạo biến word
     gtk_tree_model_get(model, iter, 0, &word, -1); // Get tree model
 
@@ -8,6 +8,8 @@ void match_selected(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *
     gtk_entry_buffer_set_text(gtk_entry_get_buffer(searchEntry), word, -1); // Đặt  word vào trong bộ đệm (buffer) của searchEntry
 
     lookUp(wdgt, word); // Gọi hàm tìm kiếm từ
+
+    return TRUE;
 }
 
 // Hàm cập nhật lại các đề xuất sau khi thực kiện các thao tác thêm, xóa từ, tải từ dũ liệu
