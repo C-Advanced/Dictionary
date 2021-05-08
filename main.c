@@ -3,7 +3,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <wchar.h>
-#include <stdarg.h>
+#include <ctype.h>
 #include "bt/inc/btree.h"
 #define WORD_MAX_LEN 200
 #define MEAN_MAX_LEN 40000
@@ -55,6 +55,75 @@ static void get_widgets(app_widgets *wdgt, GtkBuilder *builder) // Gán các wid
     wdgt->w_successMsgDialog = GTK_WIDGET(gtk_builder_get_object(builder, "successMsgDialog"));
 }
 
+void strLower(char *dest, const char *s)
+{
+    int i;
+    for (i = 0; i < strlen(s); i++)
+    {
+        dest[i] = tolower(s[i]);
+    }
+    dest[strlen(s)] = '\0';
+}
+
+void trim(char *s)
+{
+    char *p = s;
+    int l = strlen(p);
+
+    while (isspace(p[l - 1]))
+        p[--l] = 0;
+    while (*p && isspace(*p))
+        ++p, --l;
+
+    memmove(s, p, l + 1);
+}
+
+gchar *
+g_utf8_make_valid_custom (const gchar *str,
+                   gssize       len)
+{
+  GString *string;
+  const gchar *remainder, *invalid;
+  gsize remaining_bytes, valid_bytes;
+
+  g_return_val_if_fail (str != NULL, NULL);
+
+  if (len < 0)
+    len = strlen (str);
+
+  string = NULL;
+  remainder = str;
+  remaining_bytes = len;
+
+  while (remaining_bytes != 0) 
+    {
+      if (g_utf8_validate (remainder, remaining_bytes, &invalid)) 
+	break;
+      valid_bytes = invalid - remainder;
+    
+      if (string == NULL) 
+	string = g_string_sized_new (remaining_bytes);
+
+      g_string_append_len (string, remainder, valid_bytes);
+      /* append U+FFFD REPLACEMENT CHARACTER */
+      //g_string_append (string, "\357\277\275");
+      g_string_append (string, " ");
+      
+      remaining_bytes -= valid_bytes + 1;
+      remainder = invalid + 1;
+    }
+  
+  if (string == NULL)
+    return g_strndup (str, len);
+  
+  g_string_append_len (string, remainder, remaining_bytes);
+  g_string_append_c (string, '\0');
+
+  g_assert (g_utf8_validate (string->str, -1, NULL));
+
+  return g_string_free (string, FALSE);
+}
+
 void openBT() // Mở btree
 {
     if ((eng_vie = btopn("dict", 0, 0)) == NULL)
@@ -89,6 +158,7 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
 
     char *word;
     char *meaning;
+    char wordLower[WORD_MAX_LEN];
 
     tmp_word = malloc(WORD_WC_MAX_LEN * sizeof(wchar_t));
     tmp_meaning = malloc(MEAN_WC_MAX_LEN * sizeof(wchar_t));
@@ -98,7 +168,8 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
 
     line = malloc(LINE_WC_MAX_LEN * sizeof(wchar_t));
 
-    int i, j;
+    int i;
+    BTint j;
     FILE *f;
     if ((f = fopen(fileName, "r")) == NULL)
     {
@@ -132,14 +203,11 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
             // Split word
             for (i = 1; line[i] != L'/' && line[i] != L'\n' && line[i] != L'\0'; i++)
                 ;
-            if (line[i - 1] == ' ')
-                i--;
-            wcsncpy(tmp_word, &line[1], i);
-            tmp_word[i - 1] = '\0';
+            wcsncpy(tmp_word, &line[1], i - 1);
+            tmp_word[i - 1] = L'\0';
 
             // Split meaning
-            wcsncpy(tmp_meaning, &line[i + 1], wcslen(line) - i);
-            tmp_meaning[strlen(tmp_meaning)] = '\0';
+            wcsncpy(tmp_meaning, &line[i], wcslen(line) - i + 1);
 
             // Continuously read lines containing meaning
             // Read a line in dict file
@@ -161,19 +229,23 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
             wcstombs(word, tmp_word, WORD_MAX_LEN * sizeof(char));
             wcstombs(meaning, tmp_meaning, MEAN_MAX_LEN * sizeof(char));
 
-            if (bfndky(eng_vie, word, &j) != 0)
+
+            strLower(wordLower, word);
+            trim(wordLower);
+
+            if (bfndky(eng_vie, wordLower, &j) != 0)
             {
-                btins(eng_vie, word, meaning, strlen(meaning)); // Insert word to Btree
-                wordCount++; // Increase wordCount
+                btins(eng_vie, wordLower, meaning, strlen(meaning) * sizeof(char)); // Insert word to Btree
+                wordCount++;                                                                                        // Increase wordCount
             }
         }
     }
     fclose(f);
-    wordListForSuggest(searchEntry); // Cập nhật lại đề xuất cho ô tìm kiếm
+    wordListForSuggest(searchEntry);             // Cập nhật lại đề xuất cho ô tìm kiếm
     wordListForSuggest(wdgt->w_entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
 
     //Hàm sprintf gần giống với các hàm printf, fprintf nhưng nó không in ra stdout, file mà nó "in" vào chuỗi
-    sprintf(notify, "Loading done. %d words was loaded.", wordCount); 
+    sprintf(notify, "Loading done. %d words was loaded.", wordCount);
 
     //Set buffer cho meaningViewBuff là notify ở trên
     gtk_text_buffer_insert_at_cursor(meaningViewBuff, notify, strlen(notify));
@@ -197,20 +269,23 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
 
 void lookUp(app_widgets *wdgt, char *word) // Tìm kiếm từ
 {
-    openBT(); // Mở btree
-    gchar *meaning = (gchar *)malloc(MEAN_MAX_LEN * sizeof(gchar));  // gchar = char nhé
-    gint i; // gint = int nhé
+    openBT();                                                       // Mở btree
+    gchar *meaning = (gchar *)malloc(MEAN_MAX_LEN * sizeof(gchar)); // gchar = char nhé
+    gint i;                                                         // gint = int nhé
     if (bfndky(eng_vie, word, &i) == 0)
     {
         gchar *meaningUTF;
+
         btsel(eng_vie, word, meaning, MEAN_MAX_LEN, &i);
 
         // Vì sau khi tìm kiếm thành công, thì chuỗi meaning đang không ở định dạng UTF8 nên không thể set nó vào meaningViewBuff được
         //Ở đây tôi chuyển nó về dạng UTF8 với hàm g_convert => ít khi bị lỗi như thế nữa. Đang chưa biết sửa làm sao để nó không còn lỗi nữa.
-        meaningUTF = g_convert(meaning, -1, "UTF8" , "UTF8", NULL, NULL, NULL);
+        meaningUTF = g_utf8_make_valid_custom(meaning, -1);
 
         //Set meaningUTF cho meaningViewBuff
         gtk_text_buffer_set_text(meaningViewBuff, meaningUTF, -1);
+        
+        free(meaningUTF);
     }
     else
     {
@@ -240,9 +315,9 @@ void autoComplete(GtkWidget *widget) // Tự động hoàn thành từ sau khi �
 
         // So sánh key và word(là key của một nút nào đó trong btree) với strlen(key) kí tự đầu tiên
         // Nếu = 0 thì set word cho buffer của searchEntry
-        if (strncmp(key, word, strlen(key)) == 0) 
+        if (strncmp(key, word, strlen(key)) == 0)
         {
-            gtk_entry_buffer_set_text(gtk_entry_get_buffer(searchEntry), word, -1); 
+            gtk_entry_buffer_set_text(gtk_entry_get_buffer(searchEntry), word, -1);
             break;
         }
     closeBT();
@@ -311,7 +386,6 @@ void addWord(app_widgets *wdgt) // Hàm thêm từ
     gtk_text_buffer_get_bounds(buffer, &start, &end);
     mean = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
     gint val;
-
 
     if (strlen(word) <= 0 || strlen(mean) <= 0)
     {

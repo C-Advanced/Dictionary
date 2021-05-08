@@ -360,10 +360,9 @@
   </object>
   <object class="GtkTextBuffer" id="meaningViewBuff"/>
   <object class="GtkWindow" id="window_main">
-    <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">English Vietnamese Dictionary</property>
-    <property name="resizable">False</property>
+    <property name="window_position">center</property>
     <property name="default_width">600</property>
     <property name="default_height">600</property>
     <property name="icon_name">accessories-dictionary</property>
@@ -526,18 +525,26 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTextView" id="meaningView">
-            <property name="width_request">450</property>
-            <property name="height_request">300</property>
+          <object class="GtkScrolledWindow">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_left">10</property>
             <property name="margin_right">10</property>
-            <property name="margin_top">20</property>
-            <property name="editable">False</property>
-            <property name="wrap_mode">word</property>
-            <property name="buffer">meaningViewBuff</property>
-            <property name="accepts_tab">False</property>
+            <property name="margin_top">10</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTextView" id="meaningView">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hscroll_policy">natural</property>
+                <property name="vscroll_policy">natural</property>
+                <property name="editable">False</property>
+                <property name="wrap_mode">word</property>
+                <property name="justification">fill</property>
+                <property name="cursor_visible">False</property>
+                <property name="buffer">meaningViewBuff</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
