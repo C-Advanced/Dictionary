@@ -22,18 +22,18 @@ typedef struct
     GtkWidget *w_dialogAbout;
     GtkWidget *w_dialogAdd;
     GtkWidget *w_dialogDelete;
-    GtkWidget *w_entryAddWord;
+    GtkEntry *w_entryAddWord;
     GtkWidget *w_addMeaning;
     GtkTextBuffer *addMeaningBuff;
-    GtkWidget *w_entryDeleteWord;
     GtkWidget *w_fileChooserDialog;
     GtkWidget *w_errMsgDialog;
     GtkWidget *w_successMsgDialog;
 } app_widgets;
 
 BTA *eng_vie;
-GtkWidget *searchEntry;
+GtkEntry *searchEntry;
 GtkTextBuffer *meaningViewBuff; // Bộ đệm cho GtkTextView meaningView dùng để hiến thị nghĩa
+GtkEntry *w_entryDeleteWord;
 
 #include "suggest.h"
 
@@ -49,7 +49,7 @@ static void get_widgets(app_widgets *wdgt, GtkBuilder *builder) // Gán các wid
     wdgt->w_entryAddWord = GTK_WIDGET(gtk_builder_get_object(builder, "entryAddWord"));
     wdgt->w_addMeaning = GTK_WIDGET(gtk_builder_get_object(builder, "addMeaning"));
     wdgt->addMeaningBuff = GTK_TEXT_BUFFER(gtk_builder_get_object(builder, "addMeaningBuff"));
-    wdgt->w_entryDeleteWord = GTK_WIDGET(gtk_builder_get_object(builder, "entryDeleteWord"));
+    w_entryDeleteWord = GTK_WIDGET(gtk_builder_get_object(builder, "entryDeleteWord"));
     wdgt->w_fileChooserDialog = GTK_WIDGET(gtk_builder_get_object(builder, "fileChooserDialog"));
     wdgt->w_errMsgDialog = GTK_WIDGET(gtk_builder_get_object(builder, "errMsgDialog"));
     wdgt->w_successMsgDialog = GTK_WIDGET(gtk_builder_get_object(builder, "successMsgDialog"));
@@ -241,7 +241,7 @@ void loadFile(app_widgets *wdgt, char *fileName) // Load file dữ liệu
     }
     fclose(f);
     wordListForSuggest(searchEntry);             // Cập nhật lại đề xuất cho ô tìm kiếm
-    wordListForSuggest(wdgt->w_entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
+    wordListForSuggest(w_entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
 
     //Hàm sprintf gần giống với các hàm printf, fprintf nhưng nó không in ra stdout, file mà nó "in" vào chuỗi
     sprintf(notify, "Loading done. %d words was loaded.", wordCount);
@@ -270,7 +270,7 @@ void lookUp(app_widgets *wdgt, char *word) // Tìm kiếm từ
 {
     openBT();                                                       // Mở btree
     char *meaning = (gchar *)malloc(MEAN_MAX_LEN * sizeof(gchar)); // gchar = char nhé
-    int i;                                                         // gint = int nhé
+    int i;                                                                                                            // gint = int nhé
     if (bfndky(eng_vie, word, &i) == 0)
     {
         char *meaningUTF;
@@ -283,6 +283,7 @@ void lookUp(app_widgets *wdgt, char *word) // Tìm kiếm từ
 
         //Set meaningUTF cho meaningViewBuff
         gtk_text_buffer_set_text(meaningViewBuff, meaningUTF, -1);
+        free(meaningUTF);
     }
     else
     {
@@ -357,18 +358,15 @@ gboolean onEventPressKey(GtkWidget *widget, GdkEventKey *key, app_widgets *wdgt)
         {
             //Khi ấn Tab ở ô tìm kiếm sẽ gọi hàm dưới
             autoComplete(widget);
+            return TRUE;
         }
         else if (key->keyval == GDK_KEY_BackSpace || key->keyval == GDK_KEY_Delete)
         {
             // Khi xóa từ sẽ đặt rỗng cho meaningViewBuff
             gtk_text_buffer_set_text(meaningViewBuff, "", -1);
         }
-        return FALSE;
     }
-    else
-    {
-        return TRUE;
-    }
+    return FALSE;
 }
 
 void addWord(app_widgets *wdgt) // Hàm thêm từ
@@ -413,7 +411,7 @@ void addWord(app_widgets *wdgt) // Hàm thêm từ
 
 void delWord(app_widgets *wdgt) // Hàm xóa từ
 {
-    char *word = (gchar *)gtk_entry_get_text(GTK_ENTRY(wdgt->w_entryDeleteWord));
+    char *word = (gchar *)gtk_entry_get_text(GTK_ENTRY(w_entryDeleteWord));
     int i;
 
     if (strlen(word) <= 0)
@@ -434,7 +432,7 @@ void delWord(app_widgets *wdgt) // Hàm xóa từ
     }
 
     //Sau khi xóa thành công đặt ô word ở cửa sổ delete a word thành rỗng
-    gtk_entry_set_text(GTK_ENTRY(wdgt->w_entryDeleteWord), "");
+    gtk_entry_set_text(GTK_ENTRY(w_entryDeleteWord), "");
 }
 
 // called when window is closed
@@ -463,7 +461,7 @@ void on_btn_clicked(GtkButton *btn, app_widgets *wdgt) // Hàm xử lý sự ki�
     }
     else if (strcmp(gtk_widget_get_name(GTK_WIDGET(btn)), "btnCloseDialogDel") == 0)
     {
-        gtk_entry_set_text(GTK_ENTRY(wdgt->w_entryDeleteWord), "");
+        gtk_entry_set_text(GTK_ENTRY(w_entryDeleteWord), "");
         gtk_widget_hide(wdgt->w_dialogDelete);
     }
     else if (strcmp(gtk_widget_get_name(GTK_WIDGET(btn)), "btnLoad") == 0)
@@ -478,7 +476,7 @@ void on_btn_clicked(GtkButton *btn, app_widgets *wdgt) // Hàm xử lý sự ki�
         openBT();
         addWord(wdgt);
         wordListForSuggest(searchEntry);
-        wordListForSuggest(wdgt->w_entryDeleteWord);
+        wordListForSuggest(w_entryDeleteWord);
         closeBT();
     }
     else if (strcmp(gtk_widget_get_name(GTK_WIDGET(btn)), "btnDelWord") == 0)
@@ -486,7 +484,7 @@ void on_btn_clicked(GtkButton *btn, app_widgets *wdgt) // Hàm xử lý sự ki�
         openBT();
         delWord(wdgt);
         wordListForSuggest(searchEntry);
-        wordListForSuggest(wdgt->w_entryDeleteWord);
+        wordListForSuggest(w_entryDeleteWord);
         closeBT();
     }
 }
@@ -545,7 +543,7 @@ int main(int argc, char *argv[])
 
     openBT();
     wordListForSuggest(searchEntry);
-    wordListForSuggest(widgets->w_entryDeleteWord);
+    wordListForSuggest(w_entryDeleteWord);
     closeBT();
 
     gtk_widget_show_all(window);

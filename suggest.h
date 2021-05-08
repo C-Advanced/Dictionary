@@ -1,6 +1,6 @@
 // Hàm  này dùng khi chọn một từ ở mục đề xuất của searchEntry
 // Sau đó đặt từ đó vào searchEntry.
-gboolean match_selected(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *iter, app_widgets *wdgt) {
+gboolean match_selected_for_search(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *iter, app_widgets *wdgt) {
     gchar *word; // Khởi tạo biến word
     gtk_tree_model_get(model, iter, 0, &word, -1); // Get tree model
 
@@ -8,6 +8,16 @@ gboolean match_selected(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIt
     gtk_entry_buffer_set_text(gtk_entry_get_buffer(searchEntry), word, -1); // Đặt  word vào trong bộ đệm (buffer) của searchEntry
 
     lookUp(wdgt, word); // Gọi hàm tìm kiếm từ
+
+    return TRUE;
+}
+
+gboolean match_selected_for_delete(GtkEntryCompletion *widget,GtkTreeModel *model,GtkTreeIter *iter, app_widgets *wdgt) {
+    gchar *word; // Khởi tạo biến word
+    gtk_tree_model_get(model, iter, 0, &word, -1); // Get tree model
+
+    // update lookup field
+    gtk_entry_buffer_set_text(gtk_entry_get_buffer(w_entryDeleteWord), word, -1); // Đặt  word vào trong bộ đệm (buffer) của searchEntry
 
     return TRUE;
 }
@@ -27,7 +37,12 @@ void wordListForSuggest(GtkWidget *gWidget)
     gtk_entry_set_completion(GTK_ENTRY(gWidget),completion);  // Set completion cho 1 entry
 
     // Dòng này để kết nối tín hiệu xử lý khi ta chọn một từ trên đề xuất sẽ gọi đến hàm match_selected ở trên
-    g_signal_connect(G_OBJECT(completion),"match-selected",G_CALLBACK(match_selected),NULL);
+    if(strcmp(gtk_widget_get_name(GTK_WIDGET(gWidget)), "searchEntry") == 0){
+        g_signal_connect(G_OBJECT(completion),"match-selected",G_CALLBACK(match_selected_for_search),NULL);
+    }
+    else{
+        g_signal_connect(G_OBJECT(completion),"match-selected",G_CALLBACK(match_selected_for_delete),NULL);
+    }
     listStore = gtk_list_store_new(1,G_TYPE_STRING);  // Khởi tạo list store
     btpos(eng_vie,1); // Cho con trỏ BTA* eng_vie về vị trí đầu tiên trong BTree
 
