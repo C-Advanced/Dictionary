@@ -2,15 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
-#include <wchar.h>
 #include <ctype.h>
 #include "bt/inc/btree.h"
 
 #define WORD_MAX_LEN 200
 #define MEAN_MAX_LEN 40000
-#define WORD_WC_MAX_LEN 200
-#define MEAN_WC_MAX_LEN 40000
-#define LINE_WC_MAX_LEN 40000
+#define LINE_MAX_LEN 40000
 
 // Khai báo các con trỏ cho các widget
 GtkComboBoxText *comboBoxText;
@@ -71,7 +68,7 @@ void openBT()
     }
 }
 
- //Hàm đóng btree
+//Hàm đóng btree
 void closeBT()
 {
     if (eng_vie != NULL)
@@ -91,24 +88,24 @@ void loadFile(char *fileName)
 
     int wordCount = 0; // đếm số từ insert thành công vào btree file
 
-    wchar_t *tmp_word;    // widechar word
-    wchar_t *tmp_meaning; // widechar meaning
-    wchar_t *line;
-    wchar_t *linePtr;
+    char *tmp_word;
+    char *tmp_meaning;
+    char *line;
+    char *linePtr;
 
-    char notify[MEAN_MAX_LEN]; // Chuỗi thông báo 
+    char notify[MEAN_MAX_LEN]; // Chuỗi thông báo
 
     char *word;
     char *meaning;
     char wordLower[WORD_MAX_LEN];
 
-    tmp_word = malloc(WORD_WC_MAX_LEN * sizeof(wchar_t));
-    tmp_meaning = malloc(MEAN_WC_MAX_LEN * sizeof(wchar_t));
+    tmp_word = malloc(WORD_MAX_LEN * sizeof(char));
+    tmp_meaning = malloc(MEAN_MAX_LEN * sizeof(char));
 
     word = malloc(WORD_MAX_LEN * sizeof(char));
     meaning = malloc(MEAN_MAX_LEN * sizeof(char));
 
-    line = malloc(LINE_WC_MAX_LEN * sizeof(wchar_t));
+    line = malloc(LINE_MAX_LEN * sizeof(char));
 
     int i;
     BTint j;
@@ -121,13 +118,11 @@ void loadFile(char *fileName)
     else
     {
         // Find the first word
-        do
-        {
-            // Read a line in dict file
-            linePtr = fgetws(line, LINE_WC_MAX_LEN, f);
-        } while (linePtr != NULL && line[0] != L'@');
 
-        while (linePtr != NULL)
+        // Read a line in dict file
+        linePtr = fgets(line, LINE_MAX_LEN, f);
+
+        while (linePtr != NULL) 
         {
 
             if (feof(f))
@@ -135,49 +130,48 @@ void loadFile(char *fileName)
                 return;
             }
 
-            if (wcslen(line) == 0)
+            if (strlen(line) == 0)
             {
                 // Read a line in dict file
-                linePtr = fgetws(line, LINE_WC_MAX_LEN, f);
+                linePtr = fgets(line, LINE_MAX_LEN, f);
                 continue;
             }
 
             // Split word
-            for (i = 1; line[i] != L'/' && line[i] != L'\n' && line[i] != L'\0'; i++)
+            for (i = 1; line[i] != '/' && line[i] != '\n' && line[i] != '\0'; i++)
                 ;
-            wcsncpy(tmp_word, &line[1], i - 1);
-            tmp_word[i - 1] = L'\0';
+            strncpy(tmp_word, &line[1], i - 1);
+            tmp_word[i - 1] = '\0';
 
             // Split meaning
-            wcsncpy(tmp_meaning, &line[i], wcslen(line) - i + 1);
+            strncpy(tmp_meaning, &line[i], strlen(line) - i + 1);
 
             // Continuously read lines containing meaning
             // Read a line in dict file
-            linePtr = fgetws(line, LINE_WC_MAX_LEN, f);
-            while (linePtr != NULL && line[0] != L'@')
+            linePtr = fgets(line, LINE_MAX_LEN, f);
+            while (linePtr != NULL && line[0] != '@')
             {
-                if (wcslen(tmp_meaning) + wcslen(line) > MEAN_MAX_LEN)
+                if (strlen(tmp_meaning) + strlen(line) > MEAN_MAX_LEN)
                 {
                     sprintf(notify, "Meaning exceeded the maximum length. Word: %S\n", tmp_word);
                     gtk_text_buffer_insert_at_cursor(meaningViewBuff, notify, -1);
                     exit(1);
                 }
-                wcscat(tmp_meaning, line);
+                strcat(tmp_meaning, line);
                 // Read a line in dict file
-                linePtr = fgetws(line, LINE_WC_MAX_LEN, f);
+                linePtr = fgets(line, LINE_MAX_LEN, f);
             }
 
-            // Convert from widechar strings to char strings
-            wcstombs(word, tmp_word, WORD_MAX_LEN * sizeof(char));
-            wcstombs(meaning, tmp_meaning, MEAN_MAX_LEN * sizeof(char));
+            strcpy(word, tmp_word);
+            strcpy(meaning, tmp_meaning);
 
             strLower(wordLower, word); // convert word to lower
-            trim(wordLower); // trim wordLower
+            trim(wordLower);           // trim wordLower
 
             if (bfndky(eng_vie, wordLower, &j) != 0)
             {
                 btins(eng_vie, wordLower, meaning, strlen(meaning) * sizeof(char)); // Insert word to Btree
-                wordCount++;                                                                                       // Increase wordCount
+                wordCount++;                                                        // Increase wordCount
             }
         }
     }
@@ -205,10 +199,10 @@ void loadFile(char *fileName)
 
     //Append notify to meaningViewBuff
     gtk_text_buffer_insert_at_cursor(meaningViewBuff, notify, strlen(notify));
-    gtk_text_buffer_insert_at_cursor(meaningViewBuff, "Loading done. Use lookup entry to lookup words.", -1);
+    gtk_text_buffer_insert_at_cursor(meaningViewBuff, "Loading done. Use search entry to lookup words.", -1);
 }
 
- // Tìm kiếm từ
+// Tìm kiếm từ
 void lookUp(char *word)
 {
     // Mở btree
@@ -247,7 +241,8 @@ void lookUp(char *word)
 
 // Tự động hoàn thành từ sau khi ấn Tab
 
-void autoComplete(GtkEntry *entry){
+void autoComplete(GtkEntry *entry)
+{
     openBT();
 
     char word[WORD_MAX_LEN], mean[MEAN_MAX_LEN];
@@ -261,10 +256,10 @@ void autoComplete(GtkEntry *entry){
 
         //So sánh key và word(khóa nào đó trong btree)
 
-        if (strncmp(key, word, strlen(key)) == 0) // So sánh strlen(key) kí tự đầu của word và key 
+        if (strncmp(key, word, strlen(key)) == 0) // So sánh strlen(key) kí tự đầu của word và key
         {
             gtk_entry_set_text(searchEntry, word); // Set word vào searchEntry nếu đã khớp strlen(key) kí tự đầu tiên của word và key
-            break; // Thoát khỏi lặp
+            break;                                 // Thoát khỏi lặp
         }
     closeBT();
 }
@@ -272,7 +267,7 @@ void autoComplete(GtkEntry *entry){
 // Hàm xử lý thông báo
 void messageDialog(char *message, int type)
 {
-    if (type == 0) // type = 0 hiển thị thông báo thành công và type = 1 ( != 0) hiển thị thông báo lỗi. 
+    if (type == 0) // type = 0 hiển thị thông báo thành công và type = 1 ( != 0) hiển thị thông báo lỗi.
     {
         gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(successMsgDialog), message);
         gtk_dialog_run(GTK_DIALOG(successMsgDialog));
@@ -300,7 +295,7 @@ void on_searchEntry_activate(GtkEntry *searchEntry, gpointer data)
     }
 }
 
- // Hàm xử lý sự kiện bấm phím ở searchEntry
+// Hàm xử lý sự kiện bấm phím ở searchEntry
 gboolean onEventKeyInSearchEntry(GtkWidget *entry, GdkEventKey *key, gpointer data)
 {
     //Kiểm tra xem có phải đang nhấn nút hay không
@@ -335,15 +330,15 @@ void addWord()
     //Lấy nghĩa từ mean
     GtkTextIter start, end;
     gtk_text_buffer_get_start_iter(addMeaningBuff, &start); // Lấy vị trí kí tự đầu trong bộ đệm addMeaningBuff của addMeaning
-    gtk_text_buffer_get_end_iter(addMeaningBuff, &end);// Lấy vị trí kí tự hợp lệ cuối  trong bộ đệm addMeaningBuff của addMeaning
+    gtk_text_buffer_get_end_iter(addMeaningBuff, &end);     // Lấy vị trí kí tự hợp lệ cuối  trong bộ đệm addMeaningBuff của addMeaning
     // Hàm khác lấy cả vị trí đầu và vị trí cuối trong bộ đệm là gtk_text_buffer_get_bounds
-    meaning = (gchar *) gtk_text_buffer_get_text(addMeaningBuff, &start, &end, 1); // Gán chuỗi lấy ra từ bộ đệm addMeaningBuff của addMeaning cho char * meaning
+    meaning = (gchar *)gtk_text_buffer_get_text(addMeaningBuff, &start, &end, 1); // Gán chuỗi lấy ra từ bộ đệm addMeaningBuff của addMeaning cho char * meaning
     //////////////////////////////////
 
-    word = (gchar *) gtk_entry_get_text(GTK_ENTRY(entryAddWord)); // Lấy từ ở add word
+    word = (gchar *)gtk_entry_get_text(GTK_ENTRY(entryAddWord)); // Lấy từ ở add word
 
     strLower(wordLower, word); // Convert to lower
-    trim(wordLower); //Trim wordLower
+    trim(wordLower);           //Trim wordLower
 
     gtk_entry_set_text(GTK_ENTRY(entryAddWord), wordLower); // Lấy text từ entryAddWord
 
@@ -406,7 +401,7 @@ void on_window_main_destroy(GObject *object, gpointer user_data)
 // Hàm xử lý sự kiện click các nút
 void on_btn_clicked(GtkButton *btn, gpointer data)
 {
-    //So sánh name widget đang được click với name widget của các widget 
+    //So sánh name widget đang được click với name widget của các widget
     if (strcmp(gtk_widget_get_name(GTK_WIDGET(btn)), "btnCancel") == 0)
     {
         gtk_widget_hide(fileChooserDialog);
