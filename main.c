@@ -339,6 +339,8 @@ void addWord()
 
     strLower(wordLower, word); // Convert to lower
     trim(wordLower);           //Trim wordLower
+    
+    trim(meaning);
 
     gtk_entry_set_text(GTK_ENTRY(entryAddWord), wordLower); // set wordLower vào entryAddWord
 
