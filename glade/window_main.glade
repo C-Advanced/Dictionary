@@ -507,6 +507,7 @@
         </child>
         <child>
           <object class="GtkSearchEntry" id="searchEntry">
+            <property name="name">searchEntry</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="margin_left">15</property>
@@ -516,7 +517,7 @@
             <property name="primary_icon_sensitive">False</property>
             <property name="placeholder_text" translatable="yes">Enter Text</property>
             <signal name="activate" handler="on_searchEntry_activate" swapped="no"/>
-            <signal name="key-press-event" handler="onEventPressKey" swapped="no"/>
+            <signal name="key-press-event" handler="onEventKeyInSearchEntry" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
