@@ -57,5 +57,7 @@ void wordListForSuggest(GtkEntry *entry)
 
     //Set mode cho Entry Completion với list store
     gtk_entry_completion_set_model(completion, GTK_TREE_MODEL(listStore));
-    gtk_entry_set_completion(GTK_ENTRY(entry), completion); // Set completion cho 1 entry
+
+    // Set completion cho 1 entry
+    gtk_entry_set_completion(GTK_ENTRY(entry), completion);
 }
