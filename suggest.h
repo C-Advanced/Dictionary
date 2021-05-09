@@ -1,9 +1,9 @@
 // Hàm  này dùng khi chọn một từ ở mục đề xuất của searchEntry
 // Sau đó đặt từ đó vào searchEntry.
-gboolean match_selected_for_search(GtkEntryCompletion *widget, GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+gboolean match_selected_for_search(GtkEntryCompletion *completion, GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 {
     gchar *word; // Khởi tạo biến word
-    gtk_tree_model_get(model, iter, 0, &word, -1); // Get tree model
+    gtk_tree_model_get(model, iter, 0, &word, -1); // Hàm lấy word từ một ô trong một bảng. Ở đây bảng là "GtkListStore" đã được chuyển thành GtkTreeModel
 
     gtk_entry_set_text(GTK_ENTRY(searchEntry), word); //set text vao searchEntry
     // update lookup field
@@ -12,7 +12,7 @@ gboolean match_selected_for_search(GtkEntryCompletion *widget, GtkTreeModel *mod
     return TRUE;
 }
 
-gboolean match_selected_for_delete(GtkEntryCompletion *widget, GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+gboolean match_selected_for_delete(GtkEntryCompletion *completion, GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 {
     gchar *word;                                   // Khởi tạo biến word
     gtk_tree_model_get(model, iter, 0, &word, -1); // Get tree model
@@ -23,8 +23,8 @@ gboolean match_selected_for_delete(GtkEntryCompletion *widget, GtkTreeModel *mod
     return TRUE;
 }
 
-// Hàm cập nhật lại các đề xuất sau khi thực kiện các thao tác thêm, xóa từ, tải từ dũ liệu
-void wordListForSuggest(GtkEntry *entry)
+// Hàm xay dung va cap nhat lai các đề xuất sau khi thực kiện các thao tác thêm, xóa từ, tải từ dũ liệu
+void buildListSuggest(GtkEntry *entry)
 {
     GtkListStore *listStore;
     GtkTreeIter iter;
@@ -44,7 +44,7 @@ void wordListForSuggest(GtkEntry *entry)
         g_signal_connect(G_OBJECT(completion), "match-selected", G_CALLBACK(match_selected_for_delete), NULL);
     }
 
-    listStore = gtk_list_store_new(1, G_TYPE_STRING); // Khởi tạo list store
+    listStore = gtk_list_store_new(1, G_TYPE_STRING); // Khởi tạo list store với tham số đầu tiên là số cột và tham số thứ hai là kiểu cho các dữ liệu ở cột đó
     
     // Cho con trỏ BTA* eng_vie về vị trí đầu tiên trong BTree
     btpos(eng_vie, 1);
@@ -55,7 +55,7 @@ void wordListForSuggest(GtkEntry *entry)
         gtk_list_store_set(listStore, &iter, 0, word, -1);
     }
 
-    //Set mode cho Entry Completion với list store
+    //Set model cho Entry Completion với list store
     gtk_entry_completion_set_model(completion, GTK_TREE_MODEL(listStore));
 
     // Set completion cho 1 entry

@@ -61,10 +61,10 @@ void trim(char *s)
 void openBT()
 {
     //open btree
-    if ((eng_vie = btopn("dict", 0, 0)) == NULL)
+    if ((eng_vie = btopn("AnhViet.dat", 0, 0)) == NULL)
     {
         // create btree file
-        eng_vie = btcrt("dict", 0, 0);
+        eng_vie = btcrt("AnhViet.dat", 0, 0);
     }
 }
 
@@ -122,7 +122,7 @@ void loadFile(char *fileName)
         // Read a line in dict file
         linePtr = fgets(line, LINE_MAX_LEN, f);
 
-        while (linePtr != NULL) 
+        while (linePtr != NULL)
         {
 
             if (feof(f))
@@ -175,9 +175,10 @@ void loadFile(char *fileName)
             }
         }
     }
+    
     fclose(f);
-    wordListForSuggest(searchEntry);     // Cập nhật lại đề xuất cho ô tìm kiếm
-    wordListForSuggest(entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
+    buildListSuggest(searchEntry);     // Cập nhật lại đề xuất cho ô tìm kiếm
+    buildListSuggest(entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
 
     //Hàm sprintf gần giống với các hàm printf, fprintf nhưng nó không in ra stdout, file mà nó "in" vào chuỗi
     sprintf(notify, "Loading done. %d words was loaded.", wordCount);
@@ -281,26 +282,25 @@ void messageDialog(char *message, int type)
     }
 }
 
-// Hàm xử lý sự kiến ấn Enter ở searchEntry
-void on_searchEntry_activate(GtkEntry *searchEntry, gpointer data)
-{
-    gchar *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
-    if (strlen(word) <= 0)
-    {
-        messageDialog("Vui long nhap day du!!!", 1);
-    }
-    else
-    {
-        lookUp(word); // Tìm từ nếu strlen(word) > 0
-    }
-}
-
 // Hàm xử lý sự kiện bấm phím ở searchEntry
 gboolean onEventKeyInSearchEntry(GtkWidget *entry, GdkEventKey *key, gpointer data)
 {
     //Kiểm tra xem có phải đang nhấn nút hay không
     if (key)
     {
+        // Kiểm tra xem có nhấn Enter không
+        if (key->keyval == GDK_KEY_Return)
+        {
+            gchar *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
+            if (strlen(word) <= 0)
+            {
+                messageDialog("Vui long nhap day du!!!", 1);
+            }
+            else
+            {
+                lookUp(word); // Tìm từ nếu strlen(word) > 0
+            }
+        }
         //Kiểm tra xem nút nhấn có phải là Tab hay không
         if (key->keyval == GDK_KEY_Tab)
         {
@@ -340,7 +340,7 @@ void addWord()
     strLower(wordLower, word); // Convert to lower
     trim(wordLower);           //Trim wordLower
 
-    gtk_entry_set_text(GTK_ENTRY(entryAddWord), wordLower); // Lấy text từ entryAddWord
+    gtk_entry_set_text(GTK_ENTRY(entryAddWord), wordLower); // set wordLower vào entryAddWord
 
     if (strlen(wordLower) <= 0 || strlen(meaning) <= 0)
     {
@@ -432,16 +432,16 @@ void on_btn_clicked(GtkButton *btn, gpointer data)
     {
         openBT();
         addWord();
-        wordListForSuggest(searchEntry);
-        wordListForSuggest(entryDeleteWord);
+        buildListSuggest(searchEntry);
+        buildListSuggest(entryDeleteWord);
         closeBT();
     }
     else if (strcmp(gtk_widget_get_name(GTK_WIDGET(btn)), "btnDelWord") == 0)
     {
         openBT();
         delWord();
-        wordListForSuggest(searchEntry);
-        wordListForSuggest(entryDeleteWord);
+        buildListSuggest(searchEntry);
+        buildListSuggest(entryDeleteWord);
         closeBT();
     }
 }
@@ -512,8 +512,8 @@ int main(int argc, char *argv[])
     openBT();
 
     //Cập nhật gợi ý từ cho searchEntry và entryDeleteWord
-    wordListForSuggest(searchEntry);
-    wordListForSuggest(entryDeleteWord);
+    buildListSuggest(searchEntry);
+    buildListSuggest(entryDeleteWord);
 
     //Đóng btree
     closeBT();
