@@ -43,18 +43,26 @@ void strLower(char *dest, const char *s)
     dest[strlen(s)] = '\0';
 }
 
-// Hàm bỏ dấu cách ở đầu từ và cuối từ
-void trim(char *s)
+// Chuan hoa chuoi
+void chuanHoa(char *s)
 {
-    char *p = s;
-    int l = strlen(p);
+    //chuan hoa dau chuoi
+    while (s[0] == ' ')
+        strcpy(&s[0], &s[1]);
 
-    while (isspace(p[l - 1])) // isspace là kiểm tra xem một kí tự có phải khoảng trắng hay không.
-        p[--l] = 0;
-    while (*p && isspace(*p))
-        ++p, --l;
+    //chuan hoa giua chuoi
+    for (int i = 0; i < strlen(s); i++)
+    {
+        if (s[i] == ' ' && s[i + 1] == ' ')
+        {
+            strcpy(&s[i], &s[i + 1]);
+            i--;
+        }
+    }
 
-    memmove(s, p, l + 1); // Gần giống hàm memcpy
+    // Chuan hoa cuoi chuoi
+    while (s[strlen(s) - 1] == ' ')
+        strcpy(&s[strlen(s) - 1], &s[strlen(s)]);
 }
 
 // Hàm mở btree
@@ -166,7 +174,8 @@ void loadFile(char *fileName)
             strcpy(meaning, tmp_meaning);
 
             strLower(wordLower, word); // convert word to lower
-            trim(wordLower);           // trim wordLower
+            chuanHoa(wordLower);       // trim wordLower
+            chuanHoa(meaning);
 
             if (bfndky(eng_vie, wordLower, &j) != 0)
             {
@@ -175,7 +184,7 @@ void loadFile(char *fileName)
             }
         }
     }
-    
+
     fclose(f);
     buildListSuggest(searchEntry);     // Cập nhật lại đề xuất cho ô tìm kiếm
     buildListSuggest(entryDeleteWord); //Cập nhật lại đề xuất cho ô xóa
@@ -254,9 +263,7 @@ void autoComplete(GtkEntry *entry)
     //Cho con trỏ btree về khóa đầu tiên
     btpos(eng_vie, 1);
     while (btseln(eng_vie, word, mean, MEAN_MAX_LEN, &rsize) == 0) // Lặp qua tất cả các từ từ vị trí đâu của btree
-
         //So sánh key và word(khóa nào đó trong btree)
-
         if (strncmp(key, word, strlen(key)) == 0) // So sánh strlen(key) kí tự đầu của word và key
         {
             gtk_entry_set_text(searchEntry, word); // Set word vào searchEntry nếu đã khớp strlen(key) kí tự đầu tiên của word và key
@@ -282,25 +289,29 @@ void messageDialog(char *message, int type)
     }
 }
 
+// Hàm xử lý nhấn phím Enter (Tìm từ)
+void on_searchEntry_activate(GtkEntry *searchEntry, gpointer user_data)
+{
+    gchar *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
+
+    chuanHoa(word);
+
+    if (strlen(word) <= 0)
+    {
+        messageDialog("Vui long nhap day du!!!", 1);
+    }
+    else
+    {
+        lookUp(word); // Tìm từ nếu strlen(word) > 0
+    }
+}
+
 // Hàm xử lý sự kiện bấm phím ở searchEntry
 gboolean onEventKeyInSearchEntry(GtkWidget *entry, GdkEventKey *key, gpointer data)
 {
     //Kiểm tra xem có phải đang nhấn nút hay không
     if (key)
     {
-        // Kiểm tra xem có nhấn Enter không
-        if (key->keyval == GDK_KEY_Return)
-        {
-            gchar *word = gtk_entry_buffer_get_text(gtk_entry_get_buffer(searchEntry));
-            if (strlen(word) <= 0)
-            {
-                messageDialog("Vui long nhap day du!!!", 1);
-            }
-            else
-            {
-                lookUp(word); // Tìm từ nếu strlen(word) > 0
-            }
-        }
         //Kiểm tra xem nút nhấn có phải là Tab hay không
         if (key->keyval == GDK_KEY_Tab)
         {
@@ -338,9 +349,9 @@ void addWord()
     word = (gchar *)gtk_entry_get_text(GTK_ENTRY(entryAddWord)); // Lấy từ ở add word
 
     strLower(wordLower, word); // Convert to lower
-    trim(wordLower);           //Trim wordLower
-    
-    trim(meaning);
+
+    chuanHoa(wordLower);
+    chuanHoa(meaning);
 
     gtk_entry_set_text(GTK_ENTRY(entryAddWord), wordLower); // set wordLower vào entryAddWord
 
@@ -371,6 +382,8 @@ void delWord()
 {
     char *word = (gchar *)gtk_entry_get_text(GTK_ENTRY(entryDeleteWord));
     int i;
+
+    chuanHoa(word);
 
     if (strlen(word) <= 0)
     {
