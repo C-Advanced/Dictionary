@@ -33,7 +33,6 @@ void wordListForSuggest(GtkEntry *entry)
 
     GtkEntryCompletion *completion = gtk_entry_completion_new(); // Tạo 1 Entry Completion
     gtk_entry_completion_set_text_column(completion, 0);
-    gtk_entry_set_completion(GTK_ENTRY(entry), completion); // Set completion cho 1 entry
 
     // Dòng này để kết nối tín hiệu xử lý khi ta chọn một từ trên đề xuất sẽ gọi đến hàm match_selected ở trên
     if (strcmp(gtk_widget_get_name(GTK_ENTRY(entry)), "searchEntry") == 0)
@@ -58,4 +57,5 @@ void wordListForSuggest(GtkEntry *entry)
 
     //Set mode cho Entry Completion với list store
     gtk_entry_completion_set_model(completion, GTK_TREE_MODEL(listStore));
+    gtk_entry_set_completion(GTK_ENTRY(entry), completion); // Set completion cho 1 entry
 }
