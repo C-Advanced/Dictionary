@@ -1,0 +1,4 @@
+Tài liệu tham khảo:
+https://prognotes.net/2015/07/gtk-3-glade-c-programming-template/
+https://github.com/TranBaVinhSon/Dict (phần Suggest)
+https://github.com/vietanhdev/BTree-Dictionary (phần đọc file dữ liệu)
