@@ -175,7 +175,6 @@ void loadFile(char *fileName)
 
             strLower(wordLower, word); // convert word to lower
             chuanHoa(wordLower);       // trim wordLower
-            chuanHoa(meaning);
 
             if (bfndky(eng_vie, wordLower, &j) != 0)
             {
