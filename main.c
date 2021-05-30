@@ -241,7 +241,7 @@ void lookUp(char *word)
         gtk_text_buffer_set_text(meaningViewBuff, "Not found", -1);
 
         // Hiển thị thông báo lỗi
-        messageDialog("Khong ton tai tu nay!!!", 1);
+        messageDialog("Không tồn tại từ này!!!", 1);
     }
 
     //Đóng btree
@@ -297,7 +297,7 @@ void on_searchEntry_activate(GtkEntry *searchEntry, gpointer user_data)
 
     if (strlen(word) <= 0)
     {
-        messageDialog("Vui long nhap day du!!!", 1);
+        messageDialog("Vui lòng nhập đầy đủ!!!", 1);
     }
     else
     {
@@ -356,18 +356,18 @@ void addWord()
 
     if (strlen(wordLower) <= 0 || strlen(meaning) <= 0)
     {
-        messageDialog("Vui long nhap day du!!!", 1);
+        messageDialog("Vui lòng nhập đầy đủ!!!", 1);
     }
     else
     {
         if (bfndky(eng_vie, wordLower, &val) == 0) // Tìm kiếm wordLower trong btree
         {
-            messageDialog("Tu da ton tai!!!", 1);
+            messageDialog("Từ đã tôn tại!!!", 1);
         }
         else
         {
             btins(eng_vie, wordLower, meaning, strlen(meaning) * sizeof(char)); // Thêm từ và nghĩa vào btree nếu từ đó chưa tồn tại trong btree
-            messageDialog("Da them tu moi!!!", 1);
+            messageDialog("Đã thêm từ mới!!!", 1);
         }
     }
 
@@ -386,18 +386,18 @@ void delWord()
 
     if (strlen(word) <= 0)
     {
-        messageDialog("Vui long nhap day du", 1);
+        messageDialog("Vui lòng nhập đầy đủ", 1);
     }
     else
     {
         if (bfndky(eng_vie, word, &i) == 0)
         {
             bdelky(eng_vie, word);
-            messageDialog("Da xoa!!!", 1);
+            messageDialog("Đã xóa!!!", 1);
         }
         else
         {
-            messageDialog("Tu khong ton tai!!!", 1);
+            messageDialog("Từ không tồn tại!!!", 1);
         }
     }
 
@@ -486,6 +486,24 @@ void on_menuItem_activate(GtkMenuItem *menuitm, gpointer data)
     }
 }
 
+void set_css(void)
+{
+    GtkCssProvider *css_provider;
+    GdkDisplay *display;
+    GdkScreen *screen;
+    const char *css_file = "style/style.css";
+    GError *error = NULL;
+
+    css_provider = gtk_css_provider_new();
+    display = gdk_display_get_default();
+    screen = gdk_display_get_default_screen(display);
+    gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(css_provider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    gtk_css_provider_load_from_file(css_provider, g_file_new_for_path(css_file), &error);
+    g_object_unref(css_provider);
+}
+
 int main(int argc, char *argv[])
 {
     ///////////////////////////////////////////////////////////////////
@@ -517,6 +535,7 @@ int main(int argc, char *argv[])
     errMsgDialog = GTK_DIALOG(gtk_builder_get_object(builder, "errMsgDialog"));
     successMsgDialog = GTK_DIALOG(gtk_builder_get_object(builder, "successMsgDialog"));
 
+    set_css();
     // Gán xử lý các sự kiện cho builder. Ở đây là NULL
     gtk_builder_connect_signals(builder, NULL);
 
