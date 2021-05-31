@@ -1,0 +1,10 @@
+Danh sách thành viên trong nhóm:
+Lê Đình Tuyên 20194715
+Vũ Minh Hải 20194550
+Nguyễn Thị Thúy 20194685
+Phạm Đức Huy 20194588
+
+Thúy: addWord, delWord
+Hải: autoComplete, lookUp
+Huy: loadFile, on_searchEntry_activate, onEventKeyInSearch
+Tuyên: Design GUI, set_css, buildListForSuggest, match_selected_for_search, match_selected_for_delete
